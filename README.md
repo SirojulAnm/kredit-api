@@ -1,4 +1,5 @@
 # kredit-api
+- made with the domain design pattern
 - generate nomor_kontrak automatically from the system when user make transaction
 - handling user transactions with rabbitmq aims to stay smooth while receiving high transaction traffic
 
