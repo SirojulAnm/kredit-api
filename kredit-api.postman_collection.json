@@ -1,0 +1,186 @@
+{
+	"info": {
+		"_postman_id": "fff1c54c-feb2-414b-a195-18ee534435a3",
+		"name": "kredit-api",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "6138933"
+	},
+	"item": [
+		{
+			"name": "Login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\" : \"budi@gmail.com\",\n    \"password\" : \"password\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{local}}/v1/login"
+			},
+			"response": []
+		},
+		{
+			"name": "Register",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\" : \"budi@gmail.com\",\n    \"password\" : \"password\",\n    \"nik\" : 123456789101123,\n    \"full_name\" : \"Budi Harianto\",\n    \"legal_name\" : \"Budi Harianto\",\n    \"tempat_lahir\" : \"Jakarta\",\n    \"tanggal_lahir\" : \"1991-01-22\",\n    \"gaji\" : 10000000\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{local}}/v1/register"
+			},
+			"response": []
+		},
+		{
+			"name": "Upload Photo",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{auth}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file_ktp",
+							"type": "file",
+							"src": "/Users/sirojulanam/Desktop/ktp.png"
+						},
+						{
+							"key": "file_selfie",
+							"type": "file",
+							"src": "/Users/sirojulanam/Desktop/selfie.png"
+						}
+					]
+				},
+				"url": "{{local}}/v1/upload"
+			},
+			"response": []
+		},
+		{
+			"name": "Profile",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{auth}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{local}}/v1/profile"
+			},
+			"response": []
+		},
+		{
+			"name": "Add Transaksi",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{auth}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"otr\" : 1800000,\n    \"admin_fee\" : 89000,\n    \"jumlah_cicilan\" : 5600000,\n    \"jumlah_bunga\" : 9000,\n    \"nama_asset\" : \"XSR 155\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{local}}/v1/transaksi/add"
+			},
+			"response": []
+		},
+		{
+			"name": "History Transaksi",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{auth}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{local}}/v1/transaksi/history"
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "auth",
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODA1MDczNDEsInN1YiI6IjIwIn0.netYFPH9XIYJM7TUxVftqG1bLb_-aqK7nvT6rQIP4gk",
+			"type": "string"
+		},
+		{
+			"key": "local",
+			"value": "localhost:8000",
+			"type": "string"
+		}
+	]
+}

@@ -100,7 +100,7 @@ func (h *userHandler) Profile(ctx *gin.Context) {
 		protocol = "https"
 	}
 	currentURL := fmt.Sprintf("%s://%s", protocol, baseURL)
-
+	fmt.Println(currentURL)
 	formatter := user.FormatUser(currentUser, currentURL)
 
 	response := helper.APIResponse("Successfully fetch user data", http.StatusOK, "success", formatter)

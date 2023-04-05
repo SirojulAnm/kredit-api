@@ -40,8 +40,8 @@ func FormatUser(user User, baseURL string) UserFormatter {
 	formatter.LegalName = user.LegalName
 	formatter.TempatLahir = user.TempatLahir
 	formatter.Gaji = user.Gaji
-	formatter.FotoKtp = user.FotoKtp
-	formatter.FotoSelfie = user.FotoSelfie
+	formatter.FotoKtp = baseURL + "/" + user.FotoKtp
+	formatter.FotoSelfie = baseURL + "/" + user.FotoSelfie
 
 	return formatter
 }
