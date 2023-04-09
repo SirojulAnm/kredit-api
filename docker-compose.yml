@@ -2,6 +2,41 @@ version: '3'
 
 services:
 
+  service-mysql:
+    image: mysql/mysql-server:5.7
+    ports:
+      - "3306:3306"
+    environment:
+      - "MYSQL_ROOT_PASSWORD=root"
+      - "MYSQL_USER=user"
+      - "MYSQL_PASSWORD=password"
+      - "MYSQL_DATABASE=kredit"  
+    volumes:
+      - ./db-data/mysql/:/var/lib/mysql
+      - ./init.sql:/data/application/init.sql
+    command: --init-file /data/application/init.sql
+    networks: 
+      - my-network
+
+  kredit-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8000:8000"
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      - DSN=user:password@tcp(service-mysql:3306)/kredit?charset=utf8mb4&parseTime=True&loc=Local
+      - RMQ=amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      - service-mysql
+      - rabbitmq
+    networks: 
+      - my-network
+
   rabbitmq:
     image: 'rabbitmq:3.9-alpine'
     ports:
@@ -11,3 +46,8 @@ services:
       replicas: 1
     volumes:
       - ./db-data/rabbitmq/:/var/lib/rabbitmq/
+    networks: 
+      - my-network
+
+networks:
+  my-network:

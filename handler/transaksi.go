@@ -7,6 +7,7 @@ import (
 	"kredit-api/user"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/streadway/amqp"
@@ -33,7 +34,8 @@ func (h *transaksiHandler) AddTransaksi(ctx *gin.Context) {
 		return
 	}
 
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	rmq := os.Getenv("RMQ")
+	conn, err := amqp.Dial(rmq)
 	if err != nil {
 		log.Fatalf("Failed to connect to RabbitMQ: %v", err)
 	}

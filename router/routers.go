@@ -9,6 +9,7 @@ import (
 
 func Router(DB *gorm.DB) error {
 	router := gin.Default()
+	router.SetTrustedProxies(nil)
 	router.Static("/images", "./images")
 	corsConfig(router)
 
@@ -16,7 +17,7 @@ func Router(DB *gorm.DB) error {
 	group.AuthRouter(DB, v1)
 	group.TransaksiRouter(DB, v1)
 
-	err := router.Run(":8000")
+	err := router.Run("0.0.0.0:8000")
 	if err != nil {
 		return err
 	}
