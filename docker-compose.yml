@@ -11,10 +11,11 @@ services:
       - "MYSQL_USER=user"
       - "MYSQL_PASSWORD=password"
       - "MYSQL_DATABASE=kredit"  
+      - "TZ= Asia/Jakarta"
     volumes:
       - ./db-data/mysql/:/var/lib/mysql
-      - ./init.sql:/data/application/init.sql
-    command: --init-file /data/application/init.sql
+      # - ./init.sql:/data/application/init.sql
+    # command: --init-file /data/application/init.sql
     networks: 
       - my-network
 
@@ -25,29 +26,69 @@ services:
     restart: always
     ports:
       - "8000:8000"
-    deploy:
-      mode: replicated
-      replicas: 1
     environment:
       - DSN=user:password@tcp(service-mysql:3306)/kredit?charset=utf8mb4&parseTime=True&loc=Local
+      - REDIS=redis:6379
+      - MONGO=mongodb://root:password@mongodb:27017
       - RMQ=amqp://guest:guest@rabbitmq:5672/
+      - TZ=Asia/Jakarta
+    volumes:
+      - ./images/:/app/images/
+      - ./logs:/var/log
     depends_on:
       - service-mysql
       - rabbitmq
+      - redis
+      - mongodb
     networks: 
       - my-network
 
+  # listener-service:
+  #   build:
+  #     context: ./listener-service
+  #     dockerfile: listener-service.dockerfile
+  #   depends_on:
+  #     - kredit-service
+  #   networks: 
+  #     - my-network
+
   rabbitmq:
     image: 'rabbitmq:3.9-alpine'
+    restart: always
+    environment:
+      TZ: "Asia/Jakarta"
     ports:
       - "5672:5672"
-    deploy:
-      mode: replicated
-      replicas: 1
     volumes:
       - ./db-data/rabbitmq/:/var/lib/rabbitmq/
     networks: 
       - my-network
 
+  redis:
+    image: redis:6.2
+    restart: always
+    environment:
+      TZ: "Asia/Jakarta"
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./db-data/redis:/data
+    networks: 
+      - my-network
+
+  mongodb:
+    image: 'mongo:4.4'
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+      TZ: "Asia/Jakarta"
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./db-data/mongo:/data/db
+    networks: 
+      - my-network
+      
 networks:
   my-network:

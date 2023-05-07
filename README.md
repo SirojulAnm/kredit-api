@@ -2,6 +2,8 @@
 - Built with domain design pattern and runs on **docker compose**
 - Generate "nomor kontrak" automatically from the system when user create transaction
 - Handling user transactions with rabbitmq aims to stay smooth while receiving high transaction traffic
+- jwt-go management with redis to track which users are still logged in and have logged out
+- track every latency of incoming client requests using mongodb
 
 ### Getting started
 - Go to the application project directory then run the command "docker-compose up --build -d"

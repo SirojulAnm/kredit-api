@@ -79,7 +79,7 @@ func (h *userHandler) Login(ctx *gin.Context) {
 
 	token, err := h.authService.GenerateToken(loggedinUser.ID)
 	if err != nil {
-		response := helper.APIResponse("Login failed saat generate token", http.StatusBadRequest, "error", nil)
+		response := helper.APIResponse("Login failed saat generate token", http.StatusBadRequest, "error", err.Error())
 		ctx.JSON(http.StatusBadRequest, response)
 		return
 	}
@@ -91,17 +91,26 @@ func (h *userHandler) Login(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response)
 }
 
+func (h *userHandler) Logout(ctx *gin.Context) {
+	currentUser := ctx.MustGet("currentUser").(user.User)
+
+	token, err := h.authService.DeleteToken(currentUser.ID)
+	if err != nil {
+		response := helper.APIResponse("Logout failed saat revoke token", http.StatusBadRequest, "error", err)
+		ctx.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	response := helper.APIResponse("Logout Success", http.StatusOK, "success", gin.H{"token": token})
+
+	ctx.JSON(http.StatusOK, response)
+}
+
 func (h *userHandler) Profile(ctx *gin.Context) {
 	currentUser := ctx.MustGet("currentUser").(user.User)
 
-	baseURL := ctx.Request.Host
-	protocol := "http"
-	if ctx.Request.TLS != nil {
-		protocol = "https"
-	}
-	currentURL := fmt.Sprintf("%s://%s", protocol, baseURL)
-	fmt.Println(currentURL)
-	formatter := user.FormatUser(currentUser, currentURL)
+	currentUrl := helper.GetCurrentUrl(ctx)
+	formatter := user.FormatUser(currentUser, currentUrl)
 
 	response := helper.APIResponse("Successfully fetch user data", http.StatusOK, "success", formatter)
 

@@ -10,6 +10,7 @@ import (
 
 func Open() (*gorm.DB, error) {
 	dsn := os.Getenv("DSN")
+	// dsn := "root:@tcp(localhost:3306)/kredit?charset=utf8mb4&parseTime=True&loc=Local"
 	gormDB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})

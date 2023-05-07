@@ -2,15 +2,15 @@ package handler
 
 import (
 	"encoding/json"
+	"kredit-api/db"
+	"kredit-api/event"
 	"kredit-api/helper"
 	"kredit-api/transaksi"
 	"kredit-api/user"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/streadway/amqp"
 )
 
 type transaksiHandler struct {
@@ -34,86 +34,34 @@ func (h *transaksiHandler) AddTransaksi(ctx *gin.Context) {
 		return
 	}
 
-	rmq := os.Getenv("RMQ")
-	conn, err := amqp.Dial(rmq)
+	conn, err := db.ConnectRMQ()
 	if err != nil {
-		log.Fatalf("Failed to connect to RabbitMQ: %v", err)
+		log.Fatal(err)
 	}
-	defer conn.Close()
 
-	channel, err := conn.Channel()
+	ch, err := conn.Channel()
 	if err != nil {
-		log.Fatalf("Failed to open a RabbitMQ channel: %v", err)
+		log.Fatalf("Failed to open a channel: %v", err)
 	}
-	defer channel.Close()
+	defer ch.Close()
 
-	queue, err := channel.QueueDeclare(
-		"myqueue",
-		false,
-		false,
-		false,
-		false,
-		nil,
-	)
+	err = event.ExchangeDeclare(ch)
 	if err != nil {
-		log.Fatalf("Failed to declare a RabbitMQ queue: %v", err)
+		log.Fatalf("Failed to declare an exchange: %v", err)
 	}
+
+	currentUser := ctx.MustGet("currentUser").(user.User)
+	input.UserID = currentUser.ID
 
 	messageBody, err := json.Marshal(input)
-	message := amqp.Publishing{
-		ContentType: "application/json",
-		Body:        messageBody,
-	}
-
-	err = channel.Publish(
-		"",
-		queue.Name,
-		false,
-		false,
-		message,
-	)
+	err = event.Publish(ch, messageBody)
 	if err != nil {
-		log.Fatalf("Failed to publish message to RabbitMQ: %v", err)
-	}
-
-	msgs, err := channel.Consume(
-		queue.Name,
-		"",
-		true,
-		false,
-		false,
-		false,
-		nil,
-	)
-	if err != nil {
-		log.Fatalf("Failed to start consuming messages from RabbitMQ: %v", err)
-	}
-
-	var response helper.Response
-	for msg := range msgs {
-		err := json.Unmarshal(msg.Body, &input)
-		if err != nil {
-			log.Printf("Failed to deserialize message body: %v", err)
-			continue
-		}
-
-		currentUser := ctx.MustGet("currentUser").(user.User)
-		userID := currentUser.ID
-
-		input.UserID = userID
-		newTransaksi, err := h.transaksiService.AddTransaksi(input)
-		if err != nil {
-			response := helper.APIResponse("Add transaksi failed saat insert db", http.StatusBadRequest, "error", err.Error())
-			ctx.JSON(http.StatusBadRequest, response)
-			return
-		}
-
-		formatter := transaksi.FormatTransaksi(newTransaksi)
-
-		response = helper.APIResponse("Success Add transaksi", http.StatusOK, "success", formatter)
-
-		ctx.JSON(http.StatusOK, response)
+		response := helper.APIResponse("Add transaksi failed saat send RabbitMQ", http.StatusBadRequest, "error", err.Error())
+		ctx.JSON(http.StatusBadRequest, response)
 		return
 	}
 
+	response := helper.APIResponse("Success Add transaksi", http.StatusOK, "success", "berhasil kirim rabbitmq")
+
+	ctx.JSON(http.StatusOK, response)
 }

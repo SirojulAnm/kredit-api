@@ -1,6 +1,11 @@
 package helper
 
-import "github.com/go-playground/validator/v10"
+import (
+	"fmt"
+
+	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
+)
 
 type Response struct {
 	Meta Meta        `json:"meta"`
@@ -36,4 +41,16 @@ func FormatValidationError(err error) []string {
 	}
 
 	return errors
+}
+
+func GetCurrentUrl(ctx *gin.Context) string {
+	baseURL := ctx.Request.Host
+	protocol := "http"
+
+	if ctx.Request.TLS != nil {
+		protocol = "https"
+	}
+	currentURL := fmt.Sprintf("%s://%s", protocol, baseURL)
+
+	return currentURL
 }

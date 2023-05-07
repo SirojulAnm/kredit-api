@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"kredit-api/db"
 	"kredit-api/log"
 	"strconv"
 	"time"
@@ -13,6 +14,7 @@ import (
 type Service interface {
 	GenerateToken(userID int) (string, error)
 	ValidateToken(tokenStr string) (*CustomClaims, error)
+	DeleteToken(userID int) (string, error)
 }
 
 type jwtService struct {
@@ -23,18 +25,17 @@ type CustomClaims struct {
 	jwt.StandardClaims
 }
 
-var SECRET_KEY = []byte("s3c.r3t_s3cr3T_k3Y")
-
 func NewService() *jwtService {
 	return &jwtService{}
 }
 
 func (s *jwtService) GenerateToken(userID int) (string, error) {
 	now := time.Now().UTC()
+	expirationTime := time.Now().Add(time.Hour * 24)
 	//24 * time.Hour * 30
 	claims := CustomClaims{
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: 0,
+			ExpiresAt: expirationTime.Unix(),
 			IssuedAt:  now.Unix(),
 			Subject:   strconv.Itoa(userID),
 		},
@@ -44,6 +45,17 @@ func (s *jwtService) GenerateToken(userID int) (string, error) {
 	tokenStr, err := token.SignedString([]byte(s.SecretKey))
 	if err != nil {
 		log.Error(&logrus.Fields{"error": err.Error()}, "Error while encode jwt")
+		return "", err
+	}
+
+	redis, err := db.ConnRedis()
+	if err != nil {
+		return "", err
+	}
+
+	// save token in redis
+	err = redis.Set(strconv.Itoa(userID), tokenStr, expirationTime.Sub(now)).Err()
+	if err != nil {
 		return "", err
 	}
 
@@ -60,10 +72,49 @@ func (s *jwtService) ValidateToken(tokenStr string) (*CustomClaims, error) {
 		return nil, errors.New("Unauthorized, Error while parse jwt")
 	}
 
-	if claims, ok := token.Claims.(*CustomClaims); ok && token.Valid {
+	claims, ok := token.Claims.(*CustomClaims)
+
+	userID, err := strconv.Atoi(claims.Subject)
+	if err != nil {
+		return nil, err
+	}
+
+	redis, err := db.ConnRedis()
+	if err != nil {
+		return nil, err
+	}
+
+	// check if token is in redis
+	storedToken, err := redis.Get(strconv.Itoa(userID)).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	// compare stored token with incoming token
+	if tokenStr != storedToken {
+		return nil, errors.New("Token doesn't match data in redis")
+	}
+
+	if ok && token.Valid {
 		return claims, nil
 	} else {
 		log.Error(nil, "Error while claims jwt")
 		return nil, errors.New("Unauthorized, Error while claims jwt")
 	}
+}
+
+func (s *jwtService) DeleteToken(userID int) (string, error) {
+	redis, err := db.ConnRedis()
+	if err != nil {
+		return "", err
+	}
+	storedToken, err := redis.Get(strconv.Itoa(userID)).Result()
+
+	// Menghapus token dari Redis
+	err = redis.Del(strconv.Itoa(userID)).Err()
+	if err != nil {
+		return "", err
+	}
+
+	return storedToken, nil
 }

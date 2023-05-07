@@ -24,6 +24,7 @@ func AuthRouter(db *gorm.DB, main *gin.RouterGroup) {
 
 	main.POST("/login", userHandler.Login)
 	main.POST("/register", userHandler.Register)
+	main.POST("/logout", authMiddleware(userService, authService), userHandler.Logout)
 	main.POST("/upload", authMiddleware(userService, authService), userHandler.UploadPhoto)
 	main.GET("/profile", authMiddleware(userService, authService), userHandler.Profile)
 }
@@ -40,7 +41,7 @@ func authMiddleware(userService user.Service, authable auth.Service) gin.Handler
 
 		customClaim, err := authable.ValidateToken(tokenString)
 		if customClaim == nil && err != nil {
-			response := helper.APIResponse("SessionExpired", http.StatusUnauthorized, "error", nil)
+			response := helper.APIResponse("SessionExpired", http.StatusUnauthorized, "error", err.Error())
 			c.AbortWithStatusJSON(http.StatusUnauthorized, response)
 			return
 		}
